@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Beauty POS prototype</title>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#eef1f5;--surface:#fff;--ink:#14213d;--muted:#5d6b82;--line:#d9dfe8;--accent:#c8102e;--on:#fff;--tag:#e3eafa;--tagink:#1d3f8f;--ok:#17703f;--okbg:#dff3e7}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0e1420;--surface:#18202f;--ink:#eef2f9;--muted:#9aa8c0;--line:#2b3649;--accent:#ff4d62;--on:#1a0408;--tag:#22345f;--tagink:#b9ccff;--ok:#6fdc9f;--okbg:#17382a}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0e1420;--surface:#18202f;--ink:#eef2f9;--muted:#9aa8c0;--line:#2b3649;--accent:#ff4d62;--on:#1a0408;--tag:#22345f;--tagink:#b9ccff;--ok:#6fdc9f;--okbg:#17382a}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{font-family:Figtree,system-ui,sans-serif;background:var(--bg);color:var(--ink);display:flex;flex-direction:column;font-size:16px}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+header{display:flex;align-items:center;gap:16px;padding:12px 20px;background:var(--surface);border-bottom:1px solid var(--line)}
+.brand{font-weight:800;font-size:18px}.brand span{color:var(--accent)}
+.meta{color:var(--muted);font-size:14px}
+.chip{margin-left:auto;display:flex;align-items:center;gap:10px;border:1.5px solid var(--line);background:var(--bg);border-radius:999px;padding:8px 16px;font-weight:700}
+.chip.on{border-color:var(--ok);background:var(--okbg);color:var(--ok)}
+main{flex:1;min-height:0;display:grid;grid-template-columns:3fr 2fr;gap:16px;padding:16px 20px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;display:flex;flex-direction:column;min-height:0}
+.panel h2{margin:0;padding:14px 18px;font-size:17px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between}
+#cart{flex:1;overflow:auto;padding:6px 18px}
+.line{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.line:last-child{border:0}
+.nm{font-weight:700}.sub{font-size:13px;color:var(--muted);margin-top:2px}
+.tag{display:inline-block;background:var(--tag);color:var(--tagink);font-size:12px;font-weight:700;border-radius:6px;padding:2px 8px;margin-right:6px}
+.tag.later{background:var(--okbg);color:var(--ok)}
+.price{font-weight:700;min-width:70px;text-align:right}.price.dim{color:var(--muted);text-decoration:line-through}
+.x{border:0;background:none;color:var(--muted);font-size:20px;width:44px;height:44px;border-radius:10px}
+.x:hover{background:var(--bg)}
+.empty{color:var(--muted);padding:40px 0;text-align:center}
+.right{display:flex;flex-direction:column;gap:16px;min-height:0}
+.acts{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px}
+.btn{border:1.5px solid var(--line);background:var(--surface);border-radius:12px;min-height:56px;padding:10px 14px;font-weight:700}
+.btn:hover{border-color:var(--ink)}
+.btn.pri{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.btn.ord{grid-column:1/-1;border-color:var(--accent);color:var(--accent);min-height:64px;font-size:17px}
+.btn.accent{background:var(--accent);color:var(--on);border-color:var(--accent)}
+.quick{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:14px;overflow:auto}
+.quick .btn{text-align:left;font-weight:500;min-height:64px}.quick b{display:block}
+footer{background:var(--surface);border-top:1px solid var(--line);display:flex;align-items:center;gap:28px;padding:14px 20px}
+.tots{display:flex;gap:28px;margin-left:auto;align-items:baseline;color:var(--muted)}
+.tots strong{color:var(--ink)}
+.total{font-size:34px;font-weight:800;color:var(--ink)}
+.end{min-width:220px;min-height:68px;font-size:22px;font-weight:800;border-radius:14px}
+.end:disabled{opacity:.4;cursor:not-allowed}
+#scrim{position:fixed;inset:0;background:rgba(10,15,25,.55);display:none;align-items:center;justify-content:center;padding:20px;z-index:5}
+#scrim.show{display:flex}
+.modal{background:var(--surface);border-radius:16px;width:min(640px,100%);max-height:90%;overflow:auto;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+.modal h3{margin:0 0 14px;font-size:21px}
+input[type=text],input[type=tel],input[type=email]{width:100%;font:inherit;padding:14px;border:1.5px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);margin-bottom:10px}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}.row .btn{flex:1}
+.item{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;text-align:left;border:1.5px solid var(--line);background:var(--surface);border-radius:12px;padding:12px 14px;margin-bottom:8px}
+.item:hover,.item.sel{border-color:var(--accent)}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}
+.seg .btn.sel{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.lbl{font-size:14px;color:var(--muted);margin:14px 0 4px;font-weight:700}
+.sum{display:flex;justify-content:space-between;padding:6px 0}
+.big{font-size:30px;font-weight:800}
+.done{text-align:center;padding:10px 0}
+.pill{font-size:12px;font-weight:700;border-radius:6px;padding:2px 8px;white-space:nowrap}
+.p-store{background:var(--okbg);color:var(--ok)}.p-other{background:var(--tag);color:var(--tagink)}.p-order{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+textarea{width:100%;font:inherit;padding:14px;border:1.5px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)}
+#prof{position:fixed;top:0;right:0;bottom:0;width:min(460px,100%);background:var(--surface);border-left:1px solid var(--line);box-shadow:-12px 0 40px rgba(0,0,0,.25);transform:translateX(105%);transition:transform .2s;z-index:4;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
+#prof.show{transform:none}
+input[type=password]{width:100%;font:inherit;padding:14px;border:1.5px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);margin-bottom:10px}
+.view{display:none;flex:1;min-height:0;overflow:auto;padding:20px}
+body[data-view="login"] #login{display:flex;align-items:center;justify-content:center}
+body[data-view="home"] #home,body[data-view="mysales"] #mysales,body[data-view="products"] #products{display:block}
+body[data-view="login"] header{display:none}
+body:not([data-view="sale"]) main,body:not([data-view="sale"]) footer,body:not([data-view="sale"]) #chip{display:none}
+.login{width:min(380px,100%);background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:28px}
+.err{color:var(--accent);font-weight:700;min-height:20px;font-size:14px}
+.wrap{max-width:820px;margin:0 auto}
+.wrap h1{margin:0 0 4px;font-size:30px}
+.start{width:100%;min-height:96px;border:0;border-radius:16px;background:var(--accent);color:var(--on);font-size:26px;font-weight:800;margin:6px 0 16px}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tile{text-align:left;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:6px;min-height:104px}
+.tile:hover{border-color:var(--ink)}.tile b{font-size:19px}
+.hd{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px}.sv{font-size:24px;font-weight:800}
+.chart{margin-top:12px;flex-direction:row;align-items:flex-end;justify-content:space-around;padding:16px}
+.col{display:flex;flex-direction:column;align-items:center;gap:4px;justify-content:flex-end}
+.bar{width:34px;background:var(--accent);border-radius:6px 6px 0 0}
+.tx summary{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;cursor:pointer;border-bottom:1px solid var(--line);gap:10px;min-height:56px}
+.txl{padding:6px 18px 10px;border-bottom:1px solid var(--line);background:var(--bg)}
+.cats{display:flex;gap:8px;overflow:auto;padding:4px 0 8px}.cats .btn{min-height:44px;white-space:nowrap}.cats .btn.sel{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.saleBar{position:sticky;bottom:0;width:100%;min-height:60px;border:0;border-radius:14px;background:var(--ink);color:var(--surface);font-weight:800;font-size:18px;margin-top:12px}
+@media (max-width:760px){.stats{grid-template-columns:1fr 1fr}.tiles{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){#prof{transition:none}}
+.ptop{padding:18px;border-bottom:1px solid var(--line)}
+.tabs{display:flex;border-bottom:1px solid var(--line)}
+.tabs button{flex:1;border:0;background:none;padding:14px 4px;font-weight:700;color:var(--muted);border-bottom:3px solid transparent}
+.tabs button.on{color:var(--ink);border-color:var(--accent)}
+.pbody{padding:16px 18px;overflow:auto;flex:1}
+@media (max-width:760px){main{grid-template-columns:1fr;overflow:auto}.tots{gap:12px}.total{font-size:26px}.end{min-width:140px}footer{flex-wrap:wrap}}
+@media (prefers-reduced-motion:no-preference){.modal{animation:up .18s ease-out}@keyframes up{from{transform:translateY(12px);opacity:0}}}
+</style></head>
+<body data-view="login">
+<header>
+  <button class="btn" data-act="home" style="min-height:44px">Home</button>
+  <div class="brand">Shoppers <span>Beauty</span></div>
+  <div class="meta">Register 3 · Cashier: <span id="who">Sabina</span></div>
+  <button class="chip" id="chip" data-act="chip">No customer · Add</button>
+</header>
+<section class='view' id='login'><div class='login'><div class='brand' style='font-size:26px'>Shoppers <span>Beauty</span></div><div class='sub' style='margin:4px 0 18px'>Register 3 · Sign in to start your shift</div><div class='lbl'>Employee name</div><input type='text' id='lid' value='Sabina'><div class='lbl'>Password</div><input type='password' id='lpw' autocomplete='off'><div id='lerr' class='err' role='alert'></div><button class='btn accent' style='width:100%;min-height:60px;font-size:19px;margin-top:8px' data-act='login'>Sign in</button><div class='sub' style='margin-top:14px'>Prototype: the password is “beauty”.</div></div></section>
+<section class='view' id='home'></section><section class='view' id='mysales'></section><section class='view' id='products'></section>
+<main>
+  <section class="panel"><h2><span>Current sale</span><span class="meta" id="count"></span></h2><div id="cart"></div></section>
+  <div class="right">
+    <section class="panel"><div class="acts">
+      <button class="btn ord" data-act="order">Order for customer</button>
+      <button class="btn" data-act="customer">Customer</button>
+      <button class="btn" data-act="orders">Pickups</button>
+      <button class="btn" data-act="hold" id="holdBtn">Hold sale</button>
+      <button class="btn" data-act="void">Void sale</button>
+    </div></section>
+    <section class="panel" style="flex:1"><h2>Tap to scan (demo)</h2><div class="quick" id="quick"></div></section>
+  </div>
+</main>
+<footer>
+  <div class="tots"><span>Subtotal <strong id="sub">$0.00</strong></span><span>HST 13% <strong id="tax">$0.00</strong></span></div>
+  <div><div class="meta">Total</div><div class="total" id="total">$0.00</div></div>
+  <button class="btn accent end" id="end" data-act="end" disabled>End sale</button>
+</footer>
+<div id="scrim"><div class="modal" id="modal" role="dialog" aria-modal="true"></div></div>
+<aside id="prof" aria-label="Customer profile"></aside>
+
+<script>
+const $=s=>document.querySelector(s);
+const money=n=>"$"+n.toFixed(2);
+const SCAN=[
+ {id:"s1",name:"Maybelline Lash Sensational Mascara",price:14.99},
+ {id:"s2",name:"CeraVe Moisturizing Cream",price:21.99},
+ {id:"s3",name:"L’Oréal Revitalift Serum",price:29.99},
+ {id:"s4",name:"Nivea Lip Care",price:4.49},
+ {id:"s5",name:"Real Techniques Sponge",price:12.99},
+ {id:"s6",name:"Garnier Micellar Water",price:11.99}];
+const CAT=[
+ {id:"o1",name:"Fenty Soft’lit Foundation",shade:"260 Tan",price:44,avail:"order",eta:"Ships to store in 3–5 days"},
+ {id:"o2",name:"Rare Beauty Soft Pinch Blush",shade:"Joy",price:30,avail:"other",eta:"At Appleby Line store · transfer 1–2 days"},
+ {id:"o3",name:"Kosas Revealer Concealer",shade:"Tone 5",price:42,avail:"order",eta:"Ships to store in 3–5 days"},
+ {id:"o4",name:"Tarte Shape Tape Concealer",shade:"Medium",price:38,avail:"store",eta:"In stock here · aisle 6"},
+ {id:"o5",name:"Charlotte Tilbury Pillow Talk Lipstick",shade:"Original",price:44,avail:"order",eta:"Ships to store in 5–7 days"}];
+const MEMBERS=[
+ {name:"Dana Morales",phone:"905-555-0142",email:"dana@example.com",notify:"text",card:"4412 8830",pts:4820,notes:"Fenty 260 foundation, Rare Beauty Joy blush",consent:true},
+ {name:"Priya Shah",phone:"289-555-0177",email:"priya@example.com",notify:"email",card:"4412 9051",pts:1260}];
+let S={user:'Sabina',cart:[],cust:null,held:null,orders:[
+ {id:"R-2281",cust:"Dana Morales",item:"Kosas Revealer Concealer · Tone 4",price:42,status:"Ready for pickup",paid:false,date:"Nov 9"},
+ {id:"R-2275",cust:"Priya Shah",item:"Fenty Gloss Bomb · Fuk",price:27,status:"Ready for pickup",paid:true,date:"Nov 6"},
+ {id:"R-2290",cust:"Dana Morales",item:"Rare Beauty Liquid Blush · Hope",price:32,status:"Arriving Friday",paid:false,date:"Nov 11"},
+ {id:"R-2201",cust:"Dana Morales",item:"Fenty Soft’lit Foundation · 260 Tan",price:44,status:"Collected",paid:true,date:"Oct 14"}]};
+let uid=0,form={};
+const RAW=[{d:12,k:552,cust:'Priya Shah',ids:['s2','s4']},{d:12,k:603,ids:['s1']},{d:12,k:700,cust:'Dana Morales',ids:['s3'],sp:['o3']},{d:11,k:615,ids:['s5','s6']},{d:11,k:845,cust:'Dana Morales',ids:['s1'],sp:['o2']},{d:11,k:1010,ids:['s3','s4']},{d:10,k:720,ids:['s2']},{d:10,k:930,cust:'Priya Shah',ids:['s1','s6'],sp:['o5']},{d:9,k:640,ids:['s3']},{d:9,k:880,ids:['s4','s5']},{d:9,k:1020,cust:'Dana Morales',sp:['o1']},{d:8,k:700,ids:['s2','s3']},{d:7,k:760,ids:['s1']},{d:7,k:900,cust:'Priya Shah',ids:['s6','s4']},{d:6,k:660,ids:['s5']}];
+const SALES=RAW.map(r=>{const lines=[...(r.ids||[]).map(id=>{const p=SCAN.find(x=>x.id===id);return{name:p.name,price:p.price}}),...(r.sp||[]).map(id=>{const p=CAT.find(x=>x.id===id);return{name:p.name,price:p.price,special:true}})];return{d:r.d,k:r.k,cust:r.cust||'',lines,total:lines.reduce((a,l)=>a+l.price,0)*1.13}});
+const fmt=k=>{const h=Math.floor(k/60),m=k%60;return (h%12||12)+':'+String(m).padStart(2,'0')+(h<12?' AM':' PM')};
+const CATS=['All','Makeup','Skincare','Hair','Fragrance','Nails','Tools'];
+const IS='In stock · ',ST='Ships to store in 3–5 days';
+const PROD=[
+ {name:'Maybelline Lash Sensational Mascara',shade:'Blackest Black',cat:'Makeup',price:14.99,avail:'store',eta:IS+'aisle 6'},
+ {name:'Tarte Shape Tape Concealer',shade:'Medium',cat:'Makeup',price:38,avail:'store',eta:IS+'aisle 6'},
+ {name:'Fenty Soft’lit Foundation',shade:'260 Tan',cat:'Makeup',price:44,avail:'order',eta:ST},
+ {name:'Kosas Revealer Concealer',shade:'Tone 5',cat:'Makeup',price:42,avail:'order',eta:ST},
+ {name:'Rare Beauty Soft Pinch Blush',shade:'Joy',cat:'Makeup',price:30,avail:'other',eta:'At Appleby Line store · transfer 1–2 days'},
+ {name:'CeraVe Moisturizing Cream',shade:'454 g',cat:'Skincare',price:21.99,avail:'store',eta:IS+'aisle 8'},
+ {name:'L’Oréal Revitalift Serum',shade:'30 mL',cat:'Skincare',price:29.99,avail:'store',eta:IS+'aisle 8'},
+ {name:'Garnier Micellar Water',shade:'400 mL',cat:'Skincare',price:11.99,avail:'store',eta:IS+'aisle 8'},
+ {name:'Nivea Lip Care',shade:'Original',cat:'Skincare',price:4.49,avail:'store',eta:IS+'checkout display'},
+ {name:'Sol de Janeiro Bum Bum Cream',shade:'240 mL',cat:'Skincare',price:52,avail:'order',eta:ST},
+ {name:'Olaplex No. 3 Hair Perfector',shade:'100 mL',cat:'Hair',price:38,avail:'store',eta:IS+'aisle 9'},
+ {name:'Ouai Wave Spray',shade:'140 mL',cat:'Hair',price:34,avail:'other',eta:'At Appleby Line store · transfer 1–2 days'},
+ {name:'Marc Jacobs Daisy',shade:'50 mL EDT',cat:'Fragrance',price:112,avail:'store',eta:IS+'fragrance wall'},
+ {name:'Dolce & Gabbana Light Blue',shade:'50 mL EDT',cat:'Fragrance',price:108,avail:'order',eta:ST},
+ {name:'OPI Nail Lacquer',shade:'Big Apple Red',cat:'Nails',price:14.99,avail:'store',eta:IS+'aisle 7'},
+ {name:'Essie Nail Polish',shade:'Ballet Slippers',cat:'Nails',price:11.99,avail:'store',eta:IS+'aisle 7'},
+ {name:'Real Techniques Sponge',shade:'Single',cat:'Tools',price:12.99,avail:'store',eta:IS+'aisle 6'},
+ {name:'Tweezerman Slant Tweezer',shade:'Original',cat:'Tools',price:29,avail:'store',eta:IS+'aisle 7'}];
+let PV={q:'',cat:'All'},SV={p:'today'};
+function go(v){document.body.dataset.view=v;close();$('#prof').classList.remove('show');({home:renderHome,mysales:renderSales,products:renderProducts,sale:render,login:()=>{}})[v]();}
+function login(){const id=$('#lid').value.trim(),pw=$('#lpw').value;if(pw!=='beauty'){$('#lerr').textContent='That password didn’t match. Try again.';$('#lpw').select();return;}S.user=id||'Sabina';$('#who').textContent=S.user;$('#lpw').value='';$('#lerr').textContent='';go('home');}
+function renderHome(){
+ const h=new Date().getHours(),g=h<12?'Good morning':h<18?'Good afternoon':'Good evening',T=SALES.filter(s=>s.d===12),tot=T.reduce((a,s)=>a+s.total,0),rdy=S.orders.filter(o=>o.status==='Ready for pickup').length;
+ const tile=(a,t,s)=>`<button class='tile' ${a}><b>${t}</b><span class='sub'>${s}</span></button>`;
+ $('#home').innerHTML=`<div class='wrap'><h1>${g}, ${S.user}</h1><div class='sub' style='margin-bottom:14px'>Register 3 · Beauty department</div><button class='start' data-act='tosale'>${S.cart.length?'Back to current sale ('+S.cart.length+')':'Start a sale'}</button><div class='tiles'>${tile(`data-go='mysales'`,'My sales',money(tot)+' · '+T.length+' sales today')}${tile(`data-go='products'`,'Products','Browse by category or search')}${tile(`data-act='pickups'`,'Pickups',rdy+(rdy===1?' order':' orders')+' ready for pickup')}${S.held?tile(`data-act='resume'`,'Resume held sale',S.held.cart.length+' lines on hold'):''}</div><button class='btn' style='margin-top:18px' data-act='signout'>Sign out</button></div>`;
+}
+function renderSales(){
+ const wk=SV.p==='week',L=SALES.filter(s=>wk||s.d===12).sort((a,b)=>b.d-a.d||b.k-a.k),tot=L.reduce((a,s)=>a+s.total,0),sp=L.reduce((a,s)=>a+s.lines.filter(l=>l.special).length,0);
+ const days=[6,7,8,9,10,11,12],nm=['Fri','Sat','Sun','Mon','Tue','Wed','Thu'],dt=days.map(d=>SALES.filter(s=>s.d===d).reduce((a,s)=>a+s.total,0)),mx=Math.max(...dt,1);
+ $('#mysales').innerHTML=`<div class='wrap'><div class='hd'><h1>${S.user}’s sales</h1><div class='seg' style='width:280px'><button class='btn ${wk?'':'sel'}' data-per='today'>Today</button><button class='btn ${wk?'sel':''}' data-per='week'>Last 7 days</button></div></div><div class='stats'>${[['Sales',money(tot)],['Transactions',L.length],['Average sale',money(L.length?tot/L.length:0)],['Special orders',sp]].map(([a,b])=>`<div class='stat'><div class='sub'>${a}</div><div class='sv'>${b}</div></div>`).join('')}</div>${wk?`<div class='panel chart'>${days.map((d,i)=>`<div class='col'><b class='sub' style='color:var(--ink)'>$${Math.round(dt[i])}</b><div class='bar' style='height:${Math.max(4,dt[i]/mx*120)}px' title='${money(dt[i])}'></div><div class='sub'>${nm[i]} ${d}</div></div>`).join('')}</div>`:''}<div class='panel' style='margin-top:16px'>${L.map(s=>`<details class='tx'><summary><span><b>${fmt(s.k)}</b> <span class='sub'>${wk?'Nov '+s.d+' · ':''}${s.cust||'No points card'}</span></span><span>${s.lines.some(l=>l.special)?"<span class='tag'>Special order</span>":''}<b>${money(s.total)}</b></span></summary><div class='txl'>${s.lines.map(l=>`<div class='sum'><span>${l.name}${l.special?" <span class='tag'>Special order</span>":''}${l.later?" <span class='tag later'>Pay at pickup</span>":''}</span><span>${money(l.price)}</span></div>`).join('')}</div></details>`).join('')||"<div class='empty'>No sales yet today.</div>"}</div></div>`;
+}
+function renderProducts(){
+ const L=PROD.map((p,i)=>({...p,i})).filter(p=>(PV.cat==='All'||p.cat===PV.cat)&&(!PV.q||(p.name+' '+p.shade+' '+p.cat).toLowerCase().includes(PV.q.toLowerCase()))),n=S.cart.length,lb={store:'In store',other:'Other store',order:'Orderable'};
+ $('#products').innerHTML=`<div class='wrap'><h1>Products</h1><input type='text' id='pq' placeholder='Search by product, brand or shade' value='${PV.q}'><div class='cats'>${CATS.map(c=>`<button class='btn ${PV.cat===c?'sel':''}' data-cat='${c}'>${c}</button>`).join('')}</div><div class='sub' style='margin:6px 0 10px'>${L.length} products</div>${L.map(p=>`<div class='item'><span><b>${p.name}</b><br><span class='sub'>${p.shade} · ${p.eta}</span></span><span style='display:flex;gap:10px;align-items:center'><span style='text-align:right'><b>${money(p.price)}</b><br><span class='pill p-${p.avail}'>${lb[p.avail]}</span></span>${p.avail==='store'?`<button class='btn pri' style='min-height:44px' data-padd='${p.i}'>Add to sale</button>`:`<button class='btn' style='min-height:44px;border-color:var(--accent);color:var(--accent)' data-pord='${p.i}'>Order</button>`}</span></div>`).join('')||"<div class='empty'>No products match. Try another category or spelling.</div>"}${n?`<button class='saleBar' data-act='tosale'>View sale · ${n} ${n===1?'line':'lines'} · ${money(totals().total)}</button>`:''}</div>`;
+ $('#pq').addEventListener('input',e=>{PV.q=e.target.value;renderProducts();const x=$('#pq');x.focus();x.setSelectionRange(PV.q.length,PV.q.length);});
+}
+
+function totals(){
+ const sub=S.cart.filter(l=>!l.later).reduce((a,l)=>a+l.price,0);
+ const tax=sub*0.13;return{sub,tax,total:sub+tax,later:S.cart.filter(l=>l.later).reduce((a,l)=>a+l.price,0)};
+}
+function render(){
+ const c=$("#cart");
+ if(!S.cart.length)c.innerHTML='<div class="empty">Scan an item or tap Order for customer to start.</div>';
+ else c.innerHTML=S.cart.map(l=>`<div class="line"><div><div class="nm">${l.name}</div><div class="sub">${l.type==="order"?`<span class="tag">Special order</span>${l.later?'<span class="tag later">Pay at pickup</span>':""}${l.shade} · ${l.fulfil==="ship"?"Ship to home":"Pick up in store"}`:l.type==="pickup"?'<span class="tag">Pickup</span>Collect and pay':"1 × "+money(l.price)}</div></div><div class="price ${l.later?"dim":""}">${money(l.price)}</div><button class="x" data-del="${l.uid}" aria-label="Remove ${l.name}">×</button></div>`).join("");
+ const t=totals();
+ $("#sub").textContent=money(t.sub);$("#tax").textContent=money(t.tax);$("#total").textContent=money(t.total);
+ $("#count").textContent=S.cart.length?S.cart.length+(S.cart.length===1?" line":" lines"):"";
+ $("#end").disabled=!S.cart.length;
+ const ch=$("#chip");
+ ch.className="chip"+(S.cust?" on":"");
+ ch.textContent=S.cust?`${S.cust.name} · ${S.cust.pts.toLocaleString()} pts`:"No customer · Add";
+ $("#holdBtn").textContent=S.held?"Resume held sale":"Hold sale";
+}
+function add(l){S.cart.push({uid:++uid,...l});render();if(document.body.dataset.view==='products')renderProducts();}
+function open(h){$("#modal").innerHTML=h;$("#scrim").classList.add("show");const i=$("#modal input");if(i)i.focus();}
+function close(){$("#scrim").classList.remove("show");}
+
+function custModal(q=""){
+ const r=MEMBERS.filter(m=>!q||[m.name,m.phone,m.card].join(" ").toLowerCase().includes(q.toLowerCase()));
+ open(`<h3>Find or add customer</h3>
+ <input type="text" id="q" placeholder="Scan card, or type phone, email or name" value="${q}">
+ ${r.map((m,i)=>`<button class="item" data-pick="${MEMBERS.indexOf(m)}"><span><b>${m.name}</b><br><span class="sub">${m.phone} · Card ${m.card}</span></span><b>${m.pts.toLocaleString()} pts</b></button>`).join("")||'<div class="sub" style="margin:8px 0">No match. Add them as a new member.</div>'}
+ <div class="row"><button class="btn" data-act="scancard">Simulate card scan</button><button class="btn pri" data-act="newmember">New member</button><button class="btn" data-act="close">Cancel</button></div>`);
+ $("#q").addEventListener("input",e=>{const v=e.target.value;custModal(v);const n=$("#q");n.focus();n.setSelectionRange(v.length,v.length);});
+}
+function newMember(){
+ open(`<h3>New member</h3>
+ <div class="lbl">Name</div><input type="text" id="nn" placeholder="Full name">
+ <div class="lbl">Phone</div><input type="tel" id="np" placeholder="905-555-0100">
+ <div class="lbl">Email (optional, so we can find them without the card)</div><input type="email" id="ne">
+ <div class="lbl">Physical card number</div><input type="text" id="nc" placeholder="Type the number on the card you’re handing over">
+ <div class="row"><button class="btn accent" data-act="savemember">Save member</button><button class="btn" data-act="customer">Back</button></div>`);
+}
+function orderModal(q=""){
+ const r=CAT.filter(p=>!q||(p.name+p.shade).toLowerCase().includes(q.toLowerCase()));
+ open(`<h3>Order for customer</h3>
+ <input type="text" id="oq" placeholder="Search brand, product or shade" value="${q}">
+ ${r.map(p=>`<button class="item" data-prod="${p.id}"><span><b>${p.name}</b><br><span class="sub">${p.shade} · ${p.eta}</span></span><span style="text-align:right"><b>${money(p.price)}</b><br><span class="pill p-${p.avail}">${{store:"In store",other:"Other store",order:"Orderable"}[p.avail]}</span></span></button>`).join("")||'<div class="sub">Nothing found. Try another shade or brand.</div>'}
+ <div class="row"><button class="btn" data-act="close">Cancel</button></div>`);
+ $("#oq").addEventListener("input",e=>{const v=e.target.value;orderModal(v);const n=$("#oq");n.focus();n.setSelectionRange(v.length,v.length);});
+}
+function orderDetail(p){
+ const f=form;
+ open(`<h3>${p.name}</h3><div class="sub">${p.shade} · ${money(p.price)} · ${p.eta}</div>
+ <div class="lbl">Fulfillment</div><div class="seg"><button class="btn ${f.fulfil==="pickup"?"sel":""}" data-set="fulfil:pickup">Pick up in store</button><button class="btn ${f.fulfil==="ship"?"sel":""}" data-set="fulfil:ship">Ship to home</button></div>
+ <div class="lbl">Payment</div><div class="seg"><button class="btn ${!f.later?"sel":""}" data-set="later:0">Pay today</button><button class="btn ${f.later?"sel":""}" data-set="later:1">Pay at pickup</button></div>
+ <div class="lbl">We’ll notify them by</div><div class="sub" style="color:var(--ink)">${S.cust?S.cust.phone+" (from points profile)":"No customer on this sale. Add one so we know who to contact."}</div>
+ <div class="row">${S.cust?"":'<button class="btn" data-act="customer">Add customer</button>'}<button class="btn accent" data-act="addorder" ${S.cust?"":"disabled"}>Add to sale</button><button class="btn" data-act="order">Back</button></div>`);
+}
+function ordersModal(){
+ const mine=S.cust?S.orders.filter(o=>o.cust===S.cust.name):S.orders;
+ open(`<h3>Pickups${S.cust?" for "+S.cust.name:""}</h3>
+ ${mine.map(o=>`<div class="item"><span><b>${o.item}</b><br><span class="sub">${o.id} · ${o.cust} · ${o.paid?"Paid":"Balance "+money(o.price)}</span></span>${o.status==="Ready for pickup"?`<button class="btn pri" style="min-height:44px" data-hand="${o.id}">Hand over</button>`:`<span class="pill p-order">${o.status}</span>`}</div>`).join("")||'<div class="sub">No open orders.</div>'}
+ <div class="row"><button class="btn" data-act="close">Close</button></div>`);
+}
+function endModal(){
+ const t=totals();
+ open(`<h3>End sale</h3>
+ <div class="sum"><span>Subtotal</span><span>${money(t.sub)}</span></div>
+ <div class="sum"><span>HST</span><span>${money(t.tax)}</span></div>
+ ${t.later?`<div class="sum"><span>Due at pickup (not charged today)</span><span>${money(t.later)}</span></div>`:""}
+ <div class="sum big"><span>Total</span><span>${money(t.total)}</span></div>
+ <div class="lbl">Payment</div><div class="seg"><button class="btn ${form.pay!=="cash"?"sel":""}" data-set="pay:card">Debit / credit</button><button class="btn ${form.pay==="cash"?"sel":""}" data-set="pay:cash">Cash</button></div>
+ <div class="lbl">Receipt</div><div class="seg"><button class="btn ${form.rcpt!=="email"&&form.rcpt!=="none"?"sel":""}" data-set="rcpt:print">Print</button><button class="btn ${form.rcpt==="email"?"sel":""}" data-set="rcpt:email">Email</button></div>
+ <div class="sub" style="margin-top:8px">${S.cust?`${S.cust.name} earns ${Math.floor(t.sub)*10} points on this sale.`:"No points card on this sale."}</div>
+ <div class="row"><button class="btn accent" style="min-height:64px;font-size:19px" data-act="finish">Take payment ${money(t.total)}</button><button class="btn" data-act="close">Back</button></div>`);
+}
+function finish(){
+ const t=totals(),pts=S.cust?Math.floor(t.sub)*10:0;
+ SALES.push({d:12,k:new Date().getHours()*60+new Date().getMinutes(),cust:S.cust?S.cust.name:'',lines:S.cart.map(l=>({name:l.name,price:l.price,special:l.type==='order',later:!!l.later})),total:t.total});
+ if(S.cust)S.cust.pts+=pts;
+ S.cart.filter(l=>l.type==="order").forEach(l=>S.orders.push({id:"R-"+(2300+l.uid),cust:S.cust.name,item:l.name+" · "+l.shade,price:l.price,status:"Placed",paid:!l.later,date:"Nov 12"}));
+ open(`<div class="done"><div style="font-size:48px;color:var(--ok)">✓</div><h3>Sale complete</h3><div class="big">${money(t.total)}</div>
+ <p class="sub">${S.cust?`${pts.toLocaleString()} points added to ${S.cust.name}.`:"Receipt sent."}</p>
+ <div class="row"><button class="btn pri" data-act="newsale">Start next sale</button></div></div>`);
+}
+
+let P={m:null,tab:"visit"};
+function ordRow(o,full){return `<div class="item"><span><b>${o.item}</b><br><span class="sub">${o.id}${o.date?" · "+o.date:""} · ${o.paid?"Paid":"Balance "+money(o.price)}</span></span><span style="display:flex;gap:8px;align-items:center">${o.status==="Ready for pickup"?`<button class="btn pri" style="min-height:44px" data-hand="${o.id}">Hand over</button>`:`<span class="pill p-order">${o.status}</span>`}${full?`<button class="btn" style="min-height:44px" data-reorder="${o.id}">Reorder</button>`:""}</span></div>`;}
+function profile(m,tab){
+ if(m)P.m=m;if(tab)P.tab=tab;
+ const c=P.m,T=P.tab,mine=S.orders.filter(o=>o.cust===c.name),left=10000-c.pts;let b="";
+ if(T==="visit"){const rd=mine.filter(o=>o.status==="Ready for pickup"),ot=mine.filter(o=>!["Ready for pickup","Collected"].includes(o.status));
+  b=(rd.length?rd.map(o=>ordRow(o)).join(""):'<div class="sub">Nothing waiting for pickup.</div>')+(ot.length?'<div class="lbl">On the way</div>'+ot.map(o=>ordRow(o)).join(""):"")+(S.held&&S.held.cust===c?'<div class="lbl">On hold</div><div class="item">Held sale · '+S.held.cart.length+' lines</div>':"");}
+ else if(T==="orders")b=mine.length?mine.map(o=>ordRow(o,1)).join(""):'<div class="sub">No special orders yet.</div>';
+ else if(T==="details")b=`<div class="lbl">Phone</div><input type="tel" id="pp" value="${c.phone}"><div class="lbl">Email</div><input type="email" id="pe" value="${c.email||""}"><div class="lbl">Notify about orders by</div><div class="seg"><button class="btn ${c.notify!=="email"?"sel":""}" data-notify="text">Text</button><button class="btn ${c.notify==="email"?"sel":""}" data-notify="email">Email</button></div><div class="lbl">Physical card number</div><input type="text" id="pc" value="${c.card}"><div class="row"><button class="btn pri" data-act="savedet">Save details</button></div>`;
+ else b=`<div class="sub" style="margin-bottom:8px">Shades and products they buy again, so you don’t have to ask every time.</div><textarea id="sn" rows="4" placeholder="e.g. Fenty 260 foundation, Rare Beauty Joy blush">${c.notes||""}</textarea><label class="sub" style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" id="snc" ${c.consent?"checked":""}> Customer agreed we can save this note</label><div class="row"><button class="btn pri" data-act="savenote">Save note</button></div>`;
+ $("#prof").innerHTML=`<div class="ptop"><div style="display:flex;justify-content:space-between;align-items:start"><div><div class="big" style="font-size:24px">${c.name}</div><div class="sub">${c.phone} · Card ${c.card}</div></div><button class="x" data-act="closeprof" aria-label="Close profile">×</button></div><div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px"><div><b style="font-size:22px">${c.pts.toLocaleString()} pts</b><div class="sub">${left>0?left.toLocaleString()+" to next reward":"Reward available"}</div></div><button class="btn pri" data-act="closeprof">Back to sale</button></div></div><div class="tabs">${[["visit","This visit"],["orders","Orders"],["details","Details"],["notes","Shade notes"]].map(([k,v])=>`<button data-tab="${k}" class="${T===k?"on":""}">${v}</button>`).join("")}</div><div class="pbody">${b}</div>`;
+ $("#prof").classList.add("show");
+}
+document.addEventListener("click",e=>{
+ const d=e.target.closest("[data-del],[data-act],[data-pick],[data-prod],[data-set],[data-hand],[data-scan],[data-tab],[data-reorder],[data-notify],[data-go],[data-per],[data-cat],[data-padd],[data-pord]");
+ if(!d)return;
+ if(d.dataset.del){S.cart=S.cart.filter(l=>l.uid!=d.dataset.del);return render();}
+ if(d.dataset.scan){const p=SCAN.find(x=>x.id===d.dataset.scan);return add({type:"scan",...p});}
+ if(d.dataset.pick){S.cust=MEMBERS[d.dataset.pick];close();render();return profile(S.cust,"visit");}
+ if(d.dataset.prod){const p=CAT.find(x=>x.id===d.dataset.prod);form={prod:p,fulfil:"pickup",later:0};return orderDetail(p);}
+ if(d.dataset.set){const[k,v]=d.dataset.set.split(":");form[k]=k==="later"?+v:v;return form.prod&&k!=="pay"&&k!=="rcpt"?orderDetail(form.prod):endModal();}
+ if(d.dataset.hand){const o=S.orders.find(x=>x.id===d.dataset.hand);const was=o.paid;o.status="Collected";o.paid=true;if(!was)add({type:"pickup",name:o.item,price:o.price});close();if(P.m&&$("#prof").classList.contains("show"))profile();return;}
+ if(d.dataset.go)return go(d.dataset.go);
+ if(d.dataset.per){SV.p=d.dataset.per;return renderSales();}
+ if(d.dataset.cat){PV.cat=d.dataset.cat;return renderProducts();}
+ if(d.dataset.padd){const p=PROD[d.dataset.padd];return add({type:"scan",name:p.name,price:p.price});}
+ if(d.dataset.pord){const p=PROD[d.dataset.pord];form={prod:{...p},fulfil:"pickup",later:0};return orderDetail(form.prod);}
+ if(d.dataset.tab)return profile(null,d.dataset.tab);
+ if(d.dataset.notify){const m=P.m;m.phone=$("#pp").value.trim()||m.phone;m.email=$("#pe").value.trim();m.notify=d.dataset.notify;return profile();}
+ if(d.dataset.reorder){const o=S.orders.find(x=>x.id===d.dataset.reorder),[nm,sh]=o.item.split(" · "),cp=CAT.find(x=>x.name===nm)||{};form={prod:{...cp,name:nm,shade:sh,price:o.price,eta:cp.eta||"Orderable"},fulfil:"pickup",later:0};return orderDetail(form.prod);}
+ const a=d.dataset.act;
+ if(a==="close")close();
+ if(a==="chip"){if(S.cust)profile(S.cust,"visit");else custModal();}
+ if(a==="closeprof")$("#prof").classList.remove("show");
+ if(a==="tosale")go("sale");
+ if(a==="home")go("home");
+ if(a==="signout"){S.cust=null;go("login");}
+ if(a==="login")login();
+ if(a==="resume"){S.cart=S.held.cart;S.cust=S.held.cust;S.held=null;go("sale");}
+ if(a==="pickups"){go("sale");ordersModal();}
+ if(a==="savedet"){const m=P.m;m.phone=$("#pp").value.trim()||m.phone;m.email=$("#pe").value.trim();m.card=$("#pc").value.trim()||m.card;render();profile();}
+ if(a==="savenote"){if(!$("#snc").checked){$("#snc").parentElement.style.color="var(--accent)";return;}P.m.consent=true;P.m.notes=$("#sn").value.trim();profile();}
+ if(a==="customer")custModal();
+ if(a==="scancard"){S.cust=MEMBERS[0];close();render();profile(S.cust,"visit");}
+ if(a==="newmember")newMember();
+ if(a==="savemember"){const n=$("#nn").value.trim(),p=$("#np").value.trim(),c=$("#nc").value.trim();if(!n||!c){$("#nn").style.borderColor="var(--accent)";return;}const m={name:n,phone:p||"No phone",email:$("#ne").value.trim(),notify:"text",card:c,pts:0};MEMBERS.push(m);S.cust=m;close();render();}
+ if(a==="order")orderModal();
+ if(a==="addorder"){const p=form.prod;add({type:"order",name:p.name,shade:p.shade,price:p.price,fulfil:form.fulfil,later:!!form.later});close();}
+ if(a==="orders")ordersModal();
+ if(a==="hold"){if(S.held){S.cart=S.held.cart;S.cust=S.held.cust;S.held=null;}else if(S.cart.length){S.held={cart:S.cart,cust:S.cust};S.cart=[];S.cust=null;}render();}
+ if(a==="void"){if(S.cart.length)open(`<h3>Void this sale?</h3><p class="sub">All ${S.cart.length} lines will be removed.</p><div class="row"><button class="btn accent" data-act="voidok">Void sale</button><button class="btn" data-act="close">Keep sale</button></div>`);}
+ if(a==="voidok"){S.cart=[];S.cust=null;close();render();}
+ if(a==="end"){form={};endModal();}
+ if(a==="finish")finish();
+ if(a==="newsale"){S.cart=[];S.cust=null;close();render();}
+});
+document.addEventListener("keydown",e=>{if(e.key==="Enter"&&document.body.dataset.view==="login")login();if(e.key==="Escape"){close();$("#prof").classList.remove("show");}});
+$("#quick").innerHTML=SCAN.map(p=>`<button class="btn" data-scan="${p.id}"><b>${p.name}</b>${money(p.price)}</button>`).join("");
+render();
+</script>
+</body></html>
